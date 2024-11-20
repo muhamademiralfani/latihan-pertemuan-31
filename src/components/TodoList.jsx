@@ -1,11 +1,39 @@
-import React, { useState } from "react";
+import React, { useEffect } from "react";
+import { useSelector, useDispatch } from "react-redux";
+import { fetchTodos, deleteTodo, setEditTodo, updateTodoStatus } from "../redux/async/todos/actions";
 
 const TodoList = () => {
-    const [todos, setTodos] = useState([
-        { id: 1, text: "Learn React", completed: false },
-        { id: 2, text: "Build a To-Do List", completed: false },
-        { id: 3, text: "Celebrate", completed: false },
-    ]);
+  const lang = useSelector((state) => state.lang.lang);
+  const { todos, loading, error, isSuccess } = useSelector((state) => state.todo);
+  const dispatch = useDispatch();
+
+  // Get data pertama kali
+  useEffect(() => {
+    dispatch(fetchTodos());
+  }, [dispatch]);
+
+  // Get data ketika isSuccess true
+  useEffect(() => {
+    if (isSuccess) {
+      dispatch(fetchTodos());
+    }
+  }, [dispatch, isSuccess]);
+
+  const handleComplete = (id) => {
+    dispatch(updateTodoStatus(id, true));
+  };
+
+  if (loading) {
+    return <p>Loading...</p>;
+  }
+
+  if (error) {
+    return <p>{error}</p>;
+  }
+
+  if (!todos.length) {
+    return <p>{lang === "en" ? "No todos found" : "Tidak ada todo yang ditemukan"}</p>;
+  }
 
   return (
     <ul className="list-group">
@@ -16,19 +44,29 @@ const TodoList = () => {
             todo.completed ? "list-group-item-success" : ""
           }`}
         >
-          <span
+          <a
+            onClick={() => handleComplete(todo.id)}
             style={{
               cursor: "pointer",
               textDecoration: todo.completed ? "line-through" : "none",
             }}
           >
             {todo.text}
-          </span>
-          <button
-            className="btn btn-danger btn-sm"
-          >
-            Delete
-          </button>
+          </a>
+          <div>
+            <button
+              onClick={() => dispatch(setEditTodo(todo))}
+              className="btn btn-warning btn-sm me-2"
+            >
+              {lang === "en" ? "Edit" : "Edit"}
+            </button>
+            <button
+              onClick={() => dispatch(deleteTodo(todo.id))}
+              className="btn btn-danger btn-sm"
+            >
+              {lang === "en" ? "Delete" : "Hapus"}
+            </button>
+          </div>
         </li>
       ))}
     </ul>
